@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="bn" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WhatsApp Fake Chat Simulator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Roboto) -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        wa: {
+                            header: '#202c33',
+                            bgDark: '#0b141a',
+                            bubbleMe: '#005c4b',
+                            bubbleThem: '#202c33',
+                            inputBg: '#202c33',
+                            greenAccent: '#00a884',
+                            textPrimary: '#e9edef',
+                            textSecondary: '#8696a0',
+                            tickBlue: '#53bdeb',
+                            menuBg: '#233138'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .app-viewport {
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        .chat-doodle-bg {
+            background-color: #0b141a;
+            background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23182229' fill-opacity='0.45' d='M25 10a15 15 0 1 0 0 30 15 15 0 0 0 0-30zm0 5a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm75-5a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm80 15a12 12 0 1 0 0 24 12 12 0 0 0 0-24zm-130 50a15 15 0 1 0 0 30 15 15 0 0 0 0-30zm100 0a20 20 0 1 0 0 40 20 20 0 0 0 0-40zm-50 40a15 15 0 1 0 0 30 15 15 0 0 0 0-30zm-90 40a12 12 0 1 0 0 24 12 12 0 0 0 0-24zm140 10a15 15 0 1 0 0 30 15 15 0 0 0 0-30z'/%3E%3C/svg%3E");
+        }
+
+        .tail-me::before {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: 0;
+            width: 0;
+            height: 0;
+            border-top: 8px solid #005c4b;
+            border-right: 8px solid transparent;
+        }
+
+        .tail-them::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 0;
+            width: 0;
+            height: 0;
+            border-top: 8px solid #202c33;
+            border-left: 8px solid transparent;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-black text-wa-textPrimary font-sans w-screen app-viewport flex justify-center items-center overflow-hidden p-0 select-none">
+
+    <!-- 3-SECOND FLOATING DISCLAIMER OVERLAY -->
+    <div id="disclaimerOverlay" class="fixed inset-x-4 top-12 z-50 flex justify-center pointer-events-none transition-opacity duration-500 opacity-100">
+        <div class="bg-amber-500/95 text-black font-semibold text-xs px-4 py-2.5 rounded-xl shadow-2xl border border-amber-300 flex items-center space-x-2 backdrop-blur-md max-w-sm text-center">
+            <i class="fa-solid fa-triangle-exclamation text-base shrink-0"></i>
+            <span>সতর্কতা: এই অ্যাপটি শুধুমাত্র বিনোদন ও ভিডিও তৈরির উদ্দেশ্যে তৈরি করা হয়েছে।</span>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="w-full max-w-md h-full bg-wa-bgDark shadow-2xl flex flex-col overflow-hidden relative border-x border-gray-900">
+        
+        <!-- HEADER -->
+        <header class="bg-wa-header text-wa-textPrimary px-3 py-2 flex items-center justify-between z-20 shadow-md shrink-0 h-[60px]">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="openProfileModal()">
+                <button class="text-wa-textPrimary hover:opacity-80 pr-0.5">
+                    <i class="fa-solid fa-arrow-left text-base"></i>
+                </button>
+                
+                <div class="relative w-9 h-9 shrink-0">
+                    <img id="headerAvatar" src="https://placehold.co/100x100/202c33/FFFFFF?text=RM" alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-gray-700">
+                </div>
+
+                <div class="flex flex-col leading-tight overflow-hidden pl-1">
+                    <span id="headerName" class="font-medium text-sm truncate max-w-[160px]">REZAUL MUAJJIN</span>
+                    <span id="headerStatus" class="text-[11px] text-wa-textSecondary truncate">online</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4 text-wa-textPrimary text-base pr-1">
+                <i class="fa-solid fa-video cursor-pointer hover:text-wa-greenAccent" onclick="startCall('video')"></i>
+                <i class="fa-solid fa-phone cursor-pointer hover:text-wa-greenAccent text-sm" onclick="startCall('voice')"></i>
+                <div class="relative">
+                    <i class="fa-solid fa-ellipsis-vertical cursor-pointer hover:text-wa-greenAccent p-1" onclick="toggleHeaderMenu()"></i>
+                    
+                    <div id="headerDropdown" class="hidden absolute right-0 mt-2 w-40 bg-wa-menuBg rounded-md shadow-2xl border border-gray-700 py-1 text-xs text-wa-textPrimary z-50">
+                        <button onclick="clearChatList()" class="w-full text-left px-4 py-2 hover:bg-wa-bgDark text-red-400 font-medium flex items-center space-x-2">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>Clear Chat</span>
+                        </button>
+                        <button onclick="openProfileModal()" class="w-full text-left px-4 py-2 hover:bg-wa-bgDark flex items-center space-x-2">
+                            <i class="fa-solid fa-user-pen"></i>
+                            <span>Edit Profile</span>
+                        </button>
+                        <button onclick="toggleOptionMenu()" class="w-full text-left px-4 py-2 hover:bg-wa-bgDark flex items-center space-x-2">
+                            <i class="fa-solid fa-sliders"></i>
+                            <span>Control Panel</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- CHAT MESSAGES AREA -->
+        <div id="chatArea" class="flex-1 chat-doodle-bg p-3 overflow-y-auto flex flex-col space-y-2 relative min-h-0">
+            <div class="text-center my-1 shrink-0">
+                <span class="bg-[#182229] text-[#ffd279] text-[9.5px] px-3 py-1 rounded-lg inline-block max-w-[92%] leading-normal shadow">
+                    <i class="fa-solid fa-lock text-[8px] mr-1"></i> Messages and calls are end-to-end encrypted. No one outside of this chat can read or listen to them.
+                </span>
+            </div>
+
+            <div id="messagesContainer" class="space-y-1.5 pb-2"></div>
+        </div>
+
+        <!-- CONTROL PANEL OVERLAY BUBBLE (+) -->
+        <div id="optionMenuBubble" class="hidden bg-wa-menuBg border-t border-gray-700 p-3 text-xs text-wa-textPrimary shadow-2xl z-30 transition-all max-h-[300px] overflow-y-auto shrink-0 space-y-2.5">
+            <div class="flex justify-between items-center pb-1.5 border-b border-gray-700 font-bold text-wa-greenAccent">
+                <span class="flex items-center gap-1.5 text-xs"><i class="fa-solid fa-sliders"></i> Option Control Panel</span>
+                <button onclick="toggleOptionMenu()" class="text-wa-textSecondary hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] text-wa-textSecondary mb-0.5">Sender Position</label>
+                    <div class="flex rounded bg-wa-bgDark p-0.5 border border-gray-700">
+                        <button id="btnSenderMe" onclick="setSender('me')" class="flex-1 py-1 rounded bg-wa-bubbleMe text-white font-bold text-[10px]">Me (Right)</button>
+                        <button id="btnSenderThem" onclick="setSender('them')" class="flex-1 py-1 rounded text-wa-textSecondary font-bold text-[10px]">Them (Left)</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-wa-textSecondary mb-0.5">Tick Status</label>
+                    <select id="msgTickStatus" class="w-full bg-wa-bgDark border border-gray-700 rounded p-1 text-[11px] text-white outline-none">
+                        <option value="read">✓✓ Blue Ticks</option>
+                        <option value="delivered">✓✓ Grey Ticks</option>
+                        <option value="sent">✓ Single Grey</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- SEQUENTIAL AUTO-REPLY PANEL -->
+            <div class="bg-wa-bgDark p-2.5 rounded-lg border border-gray-700 space-y-2">
+                <div class="flex justify-between items-center border-b border-gray-800 pb-1">
+                    <span class="text-[11px] font-bold text-wa-greenAccent flex items-center gap-1.5">
+                        <i class="fa-solid fa-robot"></i> Sequential Auto-Reply Engine
+                    </span>
+                    <label class="flex items-center cursor-pointer text-[10px] text-wa-textSecondary gap-1">
+                        <input type="checkbox" id="autoReplyToggle" checked class="accent-wa-greenAccent w-3.5 h-3.5">
+                        <span>Enabled</span>
+                    </label>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <label class="text-[10px] text-wa-textSecondary whitespace-nowrap">Typing Delay (sec):</label>
+                    <input type="number" id="autoReplyDelay" value="2" min="1" max="20" class="w-16 bg-wa-header border border-gray-700 rounded p-0.5 text-center text-[10px] text-white outline-none">
+                </div>
+
+                <div class="space-y-1.5 mt-1">
+                    <div class="flex justify-between items-center text-[10px] text-wa-textSecondary">
+                        <span>Queued Responses (Text & Photo Uploads):</span>
+                        <span id="queueCounter" class="text-wa-greenAccent font-bold">0 queued</span>
+                    </div>
+                    <div id="autoReplyInputsList" class="space-y-2 max-h-[140px] overflow-y-auto pr-1"></div>
+                    <button onclick="addAutoReplyInput()" class="w-full py-1.5 bg-wa-header hover:bg-gray-700 border border-dashed border-gray-600 rounded text-[11px] text-wa-greenAccent font-medium flex items-center justify-center gap-1.5 transition">
+                        <i class="fa-solid fa-plus"></i> Add Next Sequential Reply
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2 pt-1">
+                <button onclick="clearChatList()" class="flex-1 bg-red-600/90 hover:bg-red-600 text-white py-1.5 rounded font-medium text-xs flex items-center justify-center space-x-1.5 shadow">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Clear Chat List</span>
+                </button>
+                <label class="bg-blue-600/90 hover:bg-blue-600 text-white px-3 py-1.5 rounded font-medium text-xs cursor-pointer flex items-center justify-center shadow">
+                    <i class="fa-solid fa-image mr-1.5"></i> Send Photo
+                    <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="sendImageMessage(event)">
+                </label>
+            </div>
+        </div>
+
+        <!-- BOTTOM INPUT BAR -->
+        <footer class="bg-wa-bgDark p-2 flex items-center space-x-2 z-20 border-t border-gray-800/80 shrink-0 h-[62px]">
+            <div class="flex-1 bg-wa-inputBg rounded-full px-3 py-2 flex items-center space-x-2">
+                <button onclick="toggleOptionMenu()" class="text-wa-textSecondary hover:text-wa-greenAccent text-lg transition" title="Option Menu">
+                    <i class="fa-solid fa-circle-plus"></i>
+                </button>
+                <i class="fa-regular fa-face-smile text-wa-textSecondary text-lg cursor-pointer"></i>
+                <input type="text" id="messageTextInput" placeholder="Message" class="w-full bg-transparent border-none focus:outline-none text-xs text-wa-textPrimary placeholder-wa-textSecondary" oninput="handleTypingState()" onkeydown="handleKeyPress(event)">
+                <i class="fa-solid fa-paperclip text-wa-textSecondary text-base cursor-pointer -rotate-45" onclick="document.getElementById('imageInput').click()"></i>
+                <i class="fa-solid fa-camera text-wa-textSecondary text-base cursor-pointer" onclick="document.getElementById('imageInput').click()"></i>
+            </div>
+            <button id="sendBtn" onclick="sendMessage()" class="w-10 h-10 bg-wa-greenAccent text-wa-bgDark rounded-full flex items-center justify-center shadow-lg hover:opacity-90 transition shrink-0">
+                <i id="sendIcon" class="fa-solid fa-microphone text-sm"></i>
+            </button>
+        </footer>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div id="profileModal" class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-wa-header rounded-xl max-w-sm w-full p-4 shadow-2xl space-y-3 border border-gray-700">
+            <h3 class="text-sm font-bold text-white border-b border-gray-700 pb-2">Edit Contact Profile</h3>
+            <div class="space-y-2">
+                <div>
+                    <label class="block text-[10px] text-wa-textSecondary mb-0.5">Contact Name</label>
+                    <input type="text" id="editNameInput" class="w-full border border-gray-700 bg-wa-bgDark rounded p-1.5 text-xs text-white outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-wa-textSecondary mb-0.5">Status Subtitle</label>
+                    <input type="text" id="editStatusInput" placeholder="online, typing..., or blank" class="w-full border border-gray-700 bg-wa-bgDark rounded p-1.5 text-xs text-white outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-wa-textSecondary mb-0.5">Profile Photo</label>
+                    <input type="file" id="editAvatarInput" accept="image/*" class="w-full text-[10px] text-wa-textSecondary">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-1">
+                <button onclick="closeProfileModal()" class="px-3 py-1 rounded bg-gray-700 text-white text-xs">Cancel</button>
+                <button onclick="saveProfile()" class="px-3 py-1 rounded bg-wa-greenAccent text-wa-bgDark text-xs font-bold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT MESSAGE MODAL -->
+    <div id="editMsgModal" class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-wa-header rounded-xl max-w-sm w-full p-4 shadow-2xl space-y-2.5 border border-gray-700">
+            <h3 class="text-xs font-bold text-white border-b border-gray-700 pb-1.5">Edit Message</h3>
+            <input type="hidden" id="editMsgId">
+            <div>
+                <label class="block text-[10px] text-wa-textSecondary mb-0.5">Message Text</label>
+                <textarea id="editMsgTextInput" rows="2" class="w-full border border-gray-700 bg-wa-bgDark rounded p-1.5 text-xs text-white outline-none"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] text-wa-textSecondary mb-0.5">Time</label>
+                    <input type="text" id="editMsgTimeInput" class="w-full border border-gray-700 bg-wa-bgDark rounded p-1 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-wa-textSecondary mb-0.5">Sender</label>
+                    <select id="editMsgSenderSelect" class="w-full border border-gray-700 bg-wa-bgDark rounded p-1 text-xs text-white">
+                        <option value="me">Me</option>
+                        <option value="them">Them</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-between items-center pt-1">
+                <button onclick="deleteSingleMessage()" class="px-2.5 py-1 rounded bg-red-600 text-white text-xs font-medium">Delete</button>
+                <div class="space-x-1.5">
+                    <button onclick="closeEditMsgModal()" class="px-2.5 py-1 rounded bg-gray-700 text-white text-xs">Cancel</button>
+                    <button onclick="saveMessageEdit()" class="px-3 py-1 rounded bg-wa-greenAccent text-wa-bgDark text-xs font-bold">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CALL MODAL -->
+    <div id="callModal" class="fixed inset-0 bg-wa-bgDark z-50 flex flex-col justify-between p-6 text-white hidden">
+        <div class="text-center space-y-1 mt-4">
+            <p id="callTypeLabel" class="text-[10px] uppercase tracking-widest text-wa-textSecondary">WhatsApp Encrypted Call</p>
+            <h2 id="callContactName" class="text-xl font-bold">REZAUL MUAJJIN</h2>
+            <p id="callTimer" class="text-xs text-wa-textSecondary">Calling...</p>
+        </div>
+
+        <div class="flex justify-center items-center my-auto">
+            <div class="w-28 h-28 rounded-full overflow-hidden border-4 border-wa-header shadow-2xl">
+                <img id="callContactAvatar" src="https://placehold.co/100x100/202c33/FFFFFF?text=RM" class="w-full h-full object-cover">
+            </div>
+        </div>
+
+        <div class="flex flex-col items-center space-y-5 mb-4">
+            <div class="flex items-center space-x-5">
+                <button class="w-10 h-10 rounded-full bg-wa-header flex items-center justify-center text-sm"><i class="fa-solid fa-volume-high"></i></button>
+                <button class="w-10 h-10 rounded-full bg-wa-header flex items-center justify-center text-sm"><i class="fa-solid fa-video-slash"></i></button>
+                <button class="w-10 h-10 rounded-full bg-wa-header flex items-center justify-center text-sm"><i class="fa-solid fa-microphone-slash"></i></button>
+            </div>
+            <button onclick="endCall()" class="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center text-xl shadow-lg hover:bg-red-700 transition">
+                <i class="fa-solid fa-phone-flip rotate-[135deg]"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- SCRIPT ENGINE -->
+    <script>
+        let activeSender = 'me';
+        let currentMessages = [];
+        let profileData = {
+            name: "REZAUL MUAJJIN",
+            status: "online",
+            avatar: "https://placehold.co/100x100/202c33/FFFFFF?text=RM"
+        };
+
+        let autoRepliesQueue = [
+            { text: "আর কোনো মাছ নাই", imageSrc: null },
+            { text: "তাহলে ওটাই থাক", imageSrc: null }
+        ];
+
+        let replyTimeout = null;
+        let callInterval = null;
+        let callSeconds = 0;
+
+        const defaultMessages = [
+            { id: 1, type: 'text', text: 'এটা হাফ নাও', sender: 'me', time: '8:55 pm', status: 'read' },
+            { id: 2, type: 'text', text: 'আর পাঙ্গাশ ইত্যাদির মধ্যে কিছু নাও', sender: 'me', time: '8:55 pm', status: 'read' },
+            { id: 3, type: 'text', text: 'আর কোনো মাছ নাই', sender: 'them', time: '8:56 pm', status: 'read' },
+            { id: 4, type: 'text', text: 'তাহলে ওটাই থাক', sender: 'me', time: '8:56 pm', status: 'read' }
+        ];
+
+        window.onload = function() {
+            // Dismiss disclaimer after exactly 3 seconds
+            setTimeout(() => {
+                const overlay = document.getElementById('disclaimerOverlay');
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.remove(), 500);
+                }
+            }, 3000);
+
+            loadLocalStorage();
+            renderAutoReplyInputs();
+            renderMessages();
+            updateProfileUI();
+            scrollToBottom();
+        };
+
+        function formatTimeStr(raw) {
+            if (!raw) {
+                const now = new Date();
+                return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+            }
+            if (raw.includes('am') || raw.includes('pm')) return raw;
+            const [hours, minutes] = raw.split(':');
+            let h = parseInt(hours);
+            const ampm = h >= 12 ? 'pm' : 'am';
+            h = h % 12 || 12;
+            return `${h}:${minutes} ${ampm}`;
+        }
+
+        function setSender(s) {
+            activeSender = s;
+            const btnMe = document.getElementById('btnSenderMe');
+            const btnThem = document.getElementById('btnSenderThem');
+            if (s === 'me') {
+                btnMe.className = "flex-1 py-1 rounded bg-wa-bubbleMe text-white font-bold text-[10px]";
+                btnThem.className = "flex-1 py-1 rounded text-wa-textSecondary font-bold text-[10px]";
+            } else {
+                btnThem.className = "flex-1 py-1 rounded bg-wa-bubbleThem text-white font-bold text-[10px]";
+                btnMe.className = "flex-1 py-1 rounded text-wa-textSecondary font-bold text-[10px]";
+            }
+        }
+
+        function handleTypingState() {
+            const txt = document.getElementById('messageTextInput').value.trim();
+            const icon = document.getElementById('sendIcon');
+            if (txt.length > 0) {
+                icon.className = "fa-solid fa-paper-plane text-xs ml-0.5";
+            } else {
+                icon.className = "fa-solid fa-microphone text-sm";
+            }
+        }
+
+        function renderAutoReplyInputs() {
+            const container = document.getElementById('autoReplyInputsList');
+            container.innerHTML = '';
+
+            autoRepliesQueue.forEach((item, index) => {
+                const textVal = typeof item === 'string' ? item : (item.text || '');
+                const imgSrc = typeof item === 'object' && item.imageSrc ? item.imageSrc : null;
+
+                const row = document.createElement('div');
+                row.className = "flex flex-col bg-wa-header/70 p-1.5 rounded border border-gray-800 space-y-1";
+                row.innerHTML = `
+                    <div class="flex items-center space-x-1.5">
+                        <span class="text-[10px] text-wa-textSecondary w-4 font-bold font-mono">${index + 1}.</span>
+                        <input type="text" value="${escapeHTML(textVal)}" onchange="updateQueueText(${index}, this.value)" class="flex-1 bg-wa-bgDark border border-gray-700 rounded px-2 py-0.5 text-[11px] text-white outline-none focus:border-wa-greenAccent" placeholder="Write reply message...">
+                        
+                        <label class="px-2 py-0.5 rounded ${imgSrc ? 'bg-wa-greenAccent text-black font-bold' : 'bg-wa-header text-wa-textSecondary hover:text-white border border-gray-700'} text-[10px] cursor-pointer flex items-center justify-center transition" title="Upload Image">
+                            <i class="fa-solid fa-image"></i>
+                            <input type="file" accept="image/*" class="hidden" onchange="uploadQueueImage(${index}, event)">
+                        </label>
+
+                        <button onclick="removeAutoReplyInput(${index})" class="text-red-400 hover:text-red-300 text-xs px-1"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                    ${imgSrc ? `
+                        <div class="relative w-12 h-12 ml-5 rounded overflow-hidden border border-wa-greenAccent">
+                            <img src="${imgSrc}" class="w-full h-full object-cover">
+                            <button onclick="removeQueueImage(${index})" class="absolute top-0 right-0 bg-red-600 text-white w-3.5 h-3.5 flex items-center justify-center text-[8px]"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    ` : ''}
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById('queueCounter').innerText = `${autoRepliesQueue.length} queued`;
+        }
+
+        function addAutoReplyInput() {
+            autoRepliesQueue.push({ text: "", imageSrc: null });
+            renderAutoReplyInputs();
+            saveLocalStorage();
+        }
+
+        function removeAutoReplyInput(index) {
+            autoRepliesQueue.splice(index, 1);
+            renderAutoReplyInputs();
+            saveLocalStorage();
+        }
+
+        function removeQueueImage(index) {
+            if (typeof autoRepliesQueue[index] === 'object') {
+                autoRepliesQueue[index].imageSrc = null;
+            }
+            renderAutoReplyInputs();
+            saveLocalStorage();
+        }
+
+        function updateQueueText(index, value) {
+            if (typeof autoRepliesQueue[index] === 'string') {
+                autoRepliesQueue[index] = { text: value.trim(), imageSrc: null };
+            } else {
+                autoRepliesQueue[index].text = value.trim();
+            }
+            saveLocalStorage();
+        }
+
+        function uploadQueueImage(index, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (typeof autoRepliesQueue[index] === 'string') {
+                    autoRepliesQueue[index] = { text: "", imageSrc: e.target.result };
+                } else {
+                    autoRepliesQueue[index].imageSrc = e.target.result;
+                }
+                renderAutoReplyInputs();
+                saveLocalStorage();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageTextInput');
+            const txt = input.value.trim();
+            const tick = document.getElementById('msgTickStatus').value;
+
+            if (!txt) return;
+
+            const newMsg = {
+                id: Date.now(),
+                type: 'text',
+                text: txt,
+                sender: activeSender,
+                time: formatTimeStr(null),
+                status: tick
+            };
+
+            currentMessages.push(newMsg);
+            input.value = '';
+            handleTypingState();
+            saveLocalStorage();
+            renderMessages();
+            scrollToBottom();
+
+            const isAutoReplyEnabled = document.getElementById('autoReplyToggle').checked;
+            if (isAutoReplyEnabled && activeSender === 'me') {
+                triggerSequentialAutoReply();
+            }
+        }
+
+        function triggerSequentialAutoReply() {
+            if (autoRepliesQueue.length === 0) return;
+
+            let nextReply = autoRepliesQueue[0];
+            while (autoRepliesQueue.length > 0 && (!nextReply || (!nextReply.text && !nextReply.imageSrc))) {
+                autoRepliesQueue.shift();
+                nextReply = autoRepliesQueue[0];
+            }
+
+            if (!nextReply) {
+                renderAutoReplyInputs();
+                return;
+            }
+
+            const delaySec = parseInt(document.getElementById('autoReplyDelay').value) || 2;
+            
+            const statusEl = document.getElementById('headerStatus');
+            statusEl.innerText = 'typing...';
+            statusEl.className = 'text-[11px] text-wa-greenAccent font-medium truncate';
+
+            if (replyTimeout) clearTimeout(replyTimeout);
+
+            replyTimeout = setTimeout(() => {
+                statusEl.innerText = profileData.status || 'online';
+                statusEl.className = 'text-[11px] text-wa-textSecondary truncate';
+
+                const sentItem = autoRepliesQueue.shift();
+                renderAutoReplyInputs();
+
+                const isObj = typeof sentItem === 'object' && sentItem !== null;
+                const textVal = isObj ? sentItem.text : sentItem;
+                const imgSrc = isObj ? sentItem.imageSrc : null;
+
+                if (imgSrc) {
+                    currentMessages.push({
+                        id: Date.now(),
+                        type: 'image',
+                        imageSrc: imgSrc,
+                        sender: 'them',
+                        time: formatTimeStr(null),
+                        status: 'read'
+                    });
+                }
+
+                if (textVal) {
+                    currentMessages.push({
+                        id: Date.now() + 1,
+                        type: 'text',
+                        text: textVal,
+                        sender: 'them',
+                        time: formatTimeStr(null),
+                        status: 'read'
+                    });
+                }
+
+                saveLocalStorage();
+                renderMessages();
+                scrollToBottom();
+            }, delaySec * 1000);
+        }
+
+        function sendImageMessage(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const tick = document.getElementById('msgTickStatus').value;
+                currentMessages.push({
+                    id: Date.now(),
+                    type: 'image',
+                    imageSrc: evt.target.result,
+                    sender: activeSender,
+                    time: formatTimeStr(null),
+                    status: tick
+                });
+                saveLocalStorage();
+                renderMessages();
+                scrollToBottom();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
+
+            currentMessages.forEach(msg => {
+                const isMe = msg.sender === 'me';
+                const wrapper = document.createElement('div');
+                wrapper.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-1 cursor-pointer`;
+                wrapper.onclick = () => openEditMsgModal(msg.id);
+
+                let statusHTML = '';
+                if (isMe) {
+                    if (msg.status === 'read') {
+                        statusHTML = `<i class="fa-solid fa-check-double text-wa-tickBlue text-[10px] ml-1"></i>`;
+                    } else if (msg.status === 'delivered') {
+                        statusHTML = `<i class="fa-solid fa-check-double text-wa-textSecondary text-[10px] ml-1"></i>`;
+                    } else {
+                        statusHTML = `<i class="fa-solid fa-check text-wa-textSecondary text-[10px] ml-1"></i>`;
+                    }
+                }
+
+                let contentHTML = '';
+
+                if (msg.type === 'image') {
+                    contentHTML = `
+                        <div class="relative overflow-hidden rounded-md">
+                            <img src="${msg.imageSrc}" class="rounded-md max-w-[210px] max-h-[260px] object-cover">
+                        </div>
+                    `;
+                } else {
+                    contentHTML = `<p class="text-xs leading-relaxed break-words text-wa-textPrimary">${escapeHTML(msg.text)}</p>`;
+                }
+
+                const bubbleBg = isMe 
+                    ? 'bg-wa-bubbleMe text-wa-textPrimary tail-me' 
+                    : 'bg-wa-bubbleThem text-wa-textPrimary tail-them';
+
+                wrapper.innerHTML = `
+                    <div class="relative max-w-[82%] rounded-lg px-2.5 py-1 shadow-sm ${bubbleBg}">
+                        ${contentHTML}
+                        <div class="flex items-center justify-end space-x-0.5 text-[9px] text-wa-textSecondary -mt-0.5 float-right ml-2 pt-0.5">
+                            <span>${msg.time}</span>
+                            ${statusHTML}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(wrapper);
+            });
+        }
+
+        function clearChatList() {
+            currentMessages = [];
+            saveLocalStorage();
+            renderMessages();
+            document.getElementById('headerDropdown').classList.add('hidden');
+        }
+
+        function scrollToBottom() {
+            const chatArea = document.getElementById('chatArea');
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function toggleOptionMenu() {
+            const el = document.getElementById('optionMenuBubble');
+            el.classList.toggle('hidden');
+        }
+
+        function toggleHeaderMenu() {
+            const el = document.getElementById('headerDropdown');
+            el.classList.toggle('hidden');
+        }
+
+        function openEditMsgModal(id) {
+            const msg = currentMessages.find(m => m.id === id);
+            if (!msg) return;
+
+            document.getElementById('editMsgId').value = msg.id;
+            document.getElementById('editMsgTextInput').value = msg.text || '';
+            document.getElementById('editMsgTimeInput').value = msg.time;
+            document.getElementById('editMsgSenderSelect').value = msg.sender;
+            document.getElementById('editMsgModal').classList.remove('hidden');
+        }
+
+        function closeEditMsgModal() {
+            document.getElementById('editMsgModal').classList.add('hidden');
+        }
+
+        function saveMessageEdit() {
+            const id = parseInt(document.getElementById('editMsgId').value);
+            const msg = currentMessages.find(m => m.id === id);
+            if (msg) {
+                msg.text = document.getElementById('editMsgTextInput').value;
+                msg.time = document.getElementById('editMsgTimeInput').value;
+                msg.sender = document.getElementById('editMsgSenderSelect').value;
+                saveLocalStorage();
+                renderMessages();
+            }
+            closeEditMsgModal();
+        }
+
+        function deleteSingleMessage() {
+            const id = parseInt(document.getElementById('editMsgId').value);
+            currentMessages = currentMessages.filter(m => m.id !== id);
+            saveLocalStorage();
+            renderMessages();
+            closeEditMsgModal();
+        }
+
+        function openProfileModal() {
+            document.getElementById('editNameInput').value = profileData.name;
+            document.getElementById('editStatusInput').value = profileData.status;
+            document.getElementById('profileModal').classList.remove('hidden');
+            document.getElementById('headerDropdown').classList.add('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('editNameInput').value.trim();
+            const status = document.getElementById('editStatusInput').value.trim();
+            const avatarFile = document.getElementById('editAvatarInput').files[0];
+
+            if (name) profileData.name = name;
+            profileData.status = status;
+
+            if (avatarFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profileData.avatar = e.target.result;
+                    updateProfileUI();
+                    saveLocalStorage();
+                };
+                reader.readAsDataURL(avatarFile);
+            } else {
+                updateProfileUI();
+                saveLocalStorage();
+            }
+
+            closeProfileModal();
+        }
+
+        function updateProfileUI() {
+            document.getElementById('headerName').innerText = profileData.name;
+            document.getElementById('headerStatus').innerText = profileData.status || '';
+            document.getElementById('headerAvatar').src = profileData.avatar;
+        }
+
+        function startCall(type) {
+            document.getElementById('callContactName').innerText = profileData.name;
+            document.getElementById('callContactAvatar').src = profileData.avatar;
+            document.getElementById('callTypeLabel').innerText = type === 'video' ? 'WhatsApp Video Call' : 'WhatsApp Voice Call';
+            document.getElementById('callModal').classList.remove('hidden');
+
+            callSeconds = 0;
+            document.getElementById('callTimer').innerText = 'Calling...';
+
+            setTimeout(() => {
+                callInterval = setInterval(() => {
+                    callSeconds++;
+                    const m = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+                    const s = String(callSeconds % 60).padStart(2, '0');
+                    document.getElementById('callTimer').innerText = `${m}:${s}`;
+                }, 1000);
+            }, 1200);
+        }
+
+        function endCall() {
+            if (callInterval) clearInterval(callInterval);
+            document.getElementById('callModal').classList.add('hidden');
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function saveLocalStorage() {
+            localStorage.setItem('wa_sim_msgs_v8', JSON.stringify(currentMessages));
+            localStorage.setItem('wa_sim_profile_v8', JSON.stringify(profileData));
+            localStorage.setItem('wa_sim_queue_v8', JSON.stringify(autoRepliesQueue));
+        }
+
+        function loadLocalStorage() {
+            const m = localStorage.getItem('wa_sim_msgs_v8');
+            const p = localStorage.getItem('wa_sim_profile_v8');
+            const q = localStorage.getItem('wa_sim_queue_v8');
+
+            if (m) currentMessages = JSON.parse(m);
+            else currentMessages = [...defaultMessages];
+
+            if (p) profileData = JSON.parse(p);
+            if (q) autoRepliesQueue = JSON.parse(q);
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>
